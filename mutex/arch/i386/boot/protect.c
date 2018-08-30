@@ -1,19 +1,24 @@
 #include <asm/types.h>
 #include <std/printk.h>
 #include <std/string.h>
+#include <std/hlt.h>
 #include <trap.h>
 #include <archtypes.h>
+#include <mm.h>
 
 #define load_idt(dtr) __asm__ __volatile__("lidt %0"::"m" (*dtr))
 #define store_idt(dtr) __asm__ __volatile__("sidt %0":"=m" (*dtr))
 #define store_gdt(dtr) __asm__ __volatile__("sgdt %0":"=m" (*dtr))
 
+extern tss_flush();
 extern void load_gdt(u32 desc_struct);
 extern void syshandler();
+extern char kernel_stack;
 
 struct desctableptr gdt_desc, idt_desc;
 struct desc_struct gdt[GDT_ENTRIES]; /* GDT */
 struct gatedesc idt[IDT_SIZE]; /* IDT */
+struct tss_entry tss; /* TSS */
 
 static struct gate_table gate_table_pic[] = {
 	{ hwint00, VECTOR( 0), INTR_PRIVILEGE },
@@ -55,7 +60,6 @@ static struct gate_table gate_table_exceptions[] = {
 	{ alignment_check, ALIGNMENT_CHECK_VECTOR, INTR_PRIVILEGE },
 	{ machine_check, MACHINE_CHECK_VECTOR, INTR_PRIVILEGE },
 	{ simd_exception, SIMD_EXCEPTION_VECTOR, INTR_PRIVILEGE },
-	// { syscall_handler, SYSCALL_VECTOR, USER_PRIVILEGE },
 	{ NULL, 0, 0}
 };
 
@@ -114,6 +118,30 @@ void init_code_segment(struct desc_struct *desc, u32 base, u32 size, int privile
   desc->access = (privilege << 5) | (PRESENT | SEGMENT | EXECUTABLE | READABLE);
 }
 
+void init_tss() {
+  struct tss_entry *t = &tss;
+  int index = TSS_INDEX;
+  struct desc_struct *tssgdt;
+
+  /* set GDT */
+  tssgdt = &gdt[index];
+  init_data_segment(tssgdt, (u32)t, sizeof(struct tss_entry), INTR_PRIVILEGE);
+  tssgdt->access = PRESENT | (INTR_PRIVILEGE << 5) | TSS_TYPE;
+
+  memset(t, 0, sizeof(struct tss_entry)); /* initialize tss */
+
+  /* set TSS */
+	t->esp0 = ((unsigned)&kernel_stack) - X86_STACK_TOP_RESERVED;
+	t->ss0 = 0x10;
+	t->cs = 0x0b;
+  t->ss = t->ds = t->es = t->fs = t->gs = 0x13;
+  t->iomap_base = sizeof(struct tss_entry);
+	t->cr3 = read_cr3();
+
+  /* DEBUG */
+  /* TODO ユーザーランドのスタックはどこになっているのか確認する */
+}
+
 void switch_to_new_idt() {
   idt_init();
   load_idt(&idt_desc);
@@ -121,6 +149,11 @@ void switch_to_new_idt() {
 
 void switch_to_new_gdt() {
   load_gdt((u32)&gdt_desc);
+}
+
+void switch_to_new_tss() {
+  init_tss();
+  tss_flush();
 }
 
 void prot_load_selectors() {
@@ -131,6 +164,9 @@ void prot_load_selectors() {
   /* set new IDT */
   switch_to_new_idt();
   printk("Setup idt...  [OK]\n");
+
+  switch_to_new_tss();
+  printk("Setup TSS...  [OK]\n");
 }
 
 void prot_init() {
@@ -141,6 +177,7 @@ void prot_init() {
   /* Init *_desc*/
   memset(&gdt_desc, 0, sizeof(gdt_desc));
   memset(&idt_desc, 0, sizeof(idt_desc));
+  memset(&tss, 0, sizeof(tss));
 
   /* set GDT pointer */
   gdt_desc.base = (u32)gdt;

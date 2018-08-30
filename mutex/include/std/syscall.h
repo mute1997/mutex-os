@@ -8,12 +8,13 @@
           "+d" (arg3), \
           "=a" (ret) \
         : "a" (i) \
-        : "memory", "cc")
+        : "memory", "cc");
 
 #define SYS_X      500
 #define SYS_XP     501
 #define SYS_READ   502
 #define SYS_WRITE  503
+#define SYS_HLT    504
 
 int (*syscalls[SYSCALL_COUNT])(u32 ebx, u32 ecx, u32 edx);
 
@@ -27,3 +28,6 @@ int sys_xp(u32 addr);
 // sysio
 int sys_write(int fd, char *buf, u32 count);
 int sys_read(int fd, char *buf, u32 count);
+
+// syshlt
+int sys_hlt();

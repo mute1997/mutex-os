@@ -1,5 +1,6 @@
 global start
 global page_directory
+global kernel_stack
 
 section .multiboot
 header_start:
@@ -20,9 +21,9 @@ KERNEL_PAGE_NUMBER equ (KERNEL_VIRTUAL_BASE >> 22)
 section .data
 align 0x1000
 page_directory:
-  dd 0x00000083
+  dd 0x00000087
   times (KERNEL_PAGE_NUMBER - 1) dd 0
-  dd 0x00000083
+  dd 0x00000087
   times (1024 - KERNEL_PAGE_NUMBER - 1) dd 0
 
 section .text
@@ -51,7 +52,7 @@ start_higher_half:
   mov dword [page_directory], 0
   invlpg [0]
 
-  mov esp, stack+STACK_SIZE
+  mov esp, kernel_stack+STACK_SIZE
 
   push ebx
   push eax
@@ -60,5 +61,5 @@ start_higher_half:
   hlt
 
 section .bss
-stack:
+kernel_stack:
   resb STACK_SIZE

@@ -1,6 +1,7 @@
 #include <lib/scanf.h>
 #include <app/echo.h>
 #include <mm.h>
+#include <lib/hlt.h>
 
 typedef struct cmd {
   char *cmd_name;

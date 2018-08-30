@@ -10,13 +10,15 @@
 
 #define SEG_SELECTOR(i) ((i)*8)
 #define KERN_CS_SELECTOR SEG_SELECTOR(KERN_CS_INDEX)
+#define KERN_DS_SELECTOR SEG_SELECTOR(KERN_DS_INDEX)
 
 /* GDT Layout */
 #define KERN_CS_INDEX 1
 #define KERN_DS_INDEX 2
 #define USER_CS_INDEX 3
 #define USER_DS_INDEX 4
-#define LDT_INDEX 5
+#define TSS_INDEX 5
+#define LDT_INDEX 6
 
 /* GDT access byte */
 #define PRESENT 0x80
@@ -32,7 +34,11 @@
 
 #define INT_286_GATE 6
 #define DESC_386_BIT 0x08
+#define AVL_286_TSS 1
 #define INT_GATE_TYPE (INT_286_GATE | DESC_386_BIT)
+#define TSS_TYPE	(AVL_286_TSS  | DESC_386_BIT)
+
+#define X86_STACK_TOP_RESERVED (2*sizeof(u32))
 
 /* Segment descriptor */
 struct desc_struct {
@@ -64,3 +70,33 @@ struct gate_table {
   u8 vec_nr;
   u8 privilege;
 };
+
+struct tss_entry {
+  u32 prev_tss;
+  u32 esp0;
+  u32 ss0;
+  u32 esp1;
+  u32 ss1;
+  u32 esp2;
+  u32 ss2;
+  u32 cr3;
+  u32 eip;
+  u32 eflags;
+  u32 eax;
+  u32 ecx;
+  u32 edx;
+  u32 ebx;
+  u32 esp;
+  u32 ebp;
+  u32 esi;
+  u32 edi;
+  u32 es;
+  u32 cs;
+  u32 ss;
+  u32 ds;
+  u32 fs;
+  u32 gs;
+  u32 ldt;
+  u16 trap;
+  u16 iomap_base;
+} __attribute__((packed));

@@ -9,7 +9,7 @@
 #include <mm.h>
 #include <std/syscall.h>
 
-extern void shell_main();
+extern void jmp_ring3();
 
 void setup(u32 magic, u32 addr) {
   if (magic != MULTIBOOT2_BOOTLOADER_MAGIC) printk("invalid magic number\n");
@@ -32,7 +32,7 @@ void setup(u32 magic, u32 addr) {
 
   init_keyboard(); /* Initialize keyboard */
 
-  shell_main();
+  jmp_ring3();
 
   hlt();
 }

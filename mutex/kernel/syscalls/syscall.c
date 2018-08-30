@@ -9,6 +9,7 @@ void init_syscalls() {
   define_syscall(SYS_XP, &sys_xp);
   define_syscall(SYS_WRITE, &sys_write);
   define_syscall(SYS_READ, &sys_read);
+  define_syscall(SYS_HLT, &sys_hlt);
 
   printk("Setup system call... [OK]\n");
 }

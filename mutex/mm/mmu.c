@@ -29,11 +29,11 @@ void map_one_page(u32 *phys_addr, u32 *virt_addr) {
   u32 pt_index = pte_index((u32)virt_addr);
 
   /* setting up page table entry */
-  page_table[pd_index][pt_index] = ((u32)phys_addr & 0xFFFFF000) |  VM_PRESENT | VM_RW;
+  page_table[pd_index][pt_index] = ((u32)phys_addr & 0xFFFFF000) |  VM_PRESENT | VM_RW | VM_USER;
 
   /* setting up page directory entry */
   u32 pt_phys = virt_to_phys(&page_table[pd_index][pt_index]);
-  page_directory[pd_index] = ((pt_phys) & 0xFFFFF000) | VM_PRESENT | VM_RW;
+  page_directory[pd_index] = ((pt_phys) & 0xFFFFF000) | VM_PRESENT | VM_RW | VM_USER;
 }
 
 /* map each 4KB page */

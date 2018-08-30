@@ -20,7 +20,7 @@ void init_kern_pages() {
   u32 base = KERNEL_VIRTUAL_BASE + 0x400000;
   u32 addr = 0x400000;
   for (u32 i=pde_index(base);i<=pde_index((u32)KERNEL_VIRTUAL_END);i++) {
-    page_directory[i] = addr | VM_PRESENT | VM_RW | VM_PS;
+    page_directory[i] = addr | VM_PRESENT | VM_RW | VM_PS | VM_USER;
     addr += 0x400000;
   }
 }

@@ -5,7 +5,7 @@
 extern int vsnprintf(char *buf, unsigned long size, const char *fmt, va_list args);
 
 int printf(const char *fmt, ...) {
-  int ret, buf_len, arg = NULL, stdout = STDOUT;
+  int ret, buf_len;
   char buf[256], *bufp;
   va_list args;
 
@@ -15,5 +15,5 @@ int printf(const char *fmt, ...) {
   vsnprintf(buf, sizeof(buf), fmt, args);
 
   buf_len = strlen(buf);
-  syscall(SYS_WRITE, stdout, bufp, buf_len, ret);
+  syscall(SYS_WRITE, STDOUT, bufp, buf_len, ret);
 }
